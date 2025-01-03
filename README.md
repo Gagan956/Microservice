@@ -1,53 +1,49 @@
 ﻿# Microservice
  
- Microservices-based application for a ride-sharing system where you have three main services:
 
-1. **Ride Service** - This service manages ride requests.
-2. **Captain Service** - This service manages captain (driver) actions, such as accepting a ride.
-3. **User Service** - This service manages the users (riders).
+In this architecture, we have three independent microservices — User Service, Ride Service, and Captain Service — that communicate asynchronously through RabbitMQ, and each service performs log polling to monitor and log its activities. The services are designed to simulate a ride-sharing application where users request rides, the ride is processed, and captains (drivers) are assigned to the rides.
 
-We will use **RabbitMQ** for communication between the services and **log polling** to simulate logging.
+User Service: Allows users to request a ride.
+Ride Service: Handles the ride requests from users, processes them, and forwards them to the captain.
+Captain Service: Accepts or rejects the ride requests from the Ride Service.
+All services will use RabbitMQ for message-driven communication, and each service logs its actions in a log file. A log polling mechanism checks the log file periodically to print the logs in real-time.
 
-All services will be running locally on `localhost:3000` for the sake of simplicity.
+Flow of Communication
+User Service:
 
-### Key Components:
-- **RabbitMQ** for asynchronous communication between services.
-- **Express.js** for the microservices.
-- **Amqplib** for RabbitMQ communication.
-- **Polling** a log file to simulate log tracking.
-  
-We'll also assume that we have installed RabbitMQ locally and have `npm` (Node.js) set up.
+Purpose: Represents the user of the ride-sharing application who wants to request a ride.
+Operation:
+When a user initiates a ride request (via an HTTP API call), the User Service sends the request as a message to a RabbitMQ queue (the "ride_queue").
+It logs the request to a shared log file for monitoring purposes.
+Ride Service:
 
-### Prerequisites:
-1. RabbitMQ should be running locally on `localhost:5672`.
-2. You need to install the following dependencies in your services:
-   ```bash
-   npm install express amqplib fs
-   ```
+Purpose: Processes ride requests, handles logic for assigning rides, and communicates with the Captain Service.
+Operation:
+The Ride Service listens for incoming messages on the "ride_queue" from the User Service.
+Upon receiving a ride request, it processes the request (e.g., updates the status) and forwards it to the "captain_queue" for the Captain Service to handle.
+It logs the action of forwarding the ride request to the Captain in a shared log file.
+Captain Service:
 
----
+Purpose: Simulates a driver (captain) who accepts or rejects the ride request.
+Operation:
+The Captain Service listens for ride requests from the "captain_queue", which it receives from the Ride Service.
+Once a ride request is received, the Captain Service updates the status of the request (e.g., accepting the ride) and logs the action.
+RabbitMQ Communication
+RabbitMQ is used to decouple the services and allow asynchronous communication. Each service will communicate with others via queues:
+User to Ride: The User Service sends ride requests to the ride_queue in RabbitMQ.
+Ride to Captain: The Ride Service processes the requests and forwards them to the captain_queue.
+Captain updates: The Captain Service processes requests from the captain_queue, updating the ride status (e.g., "Accepted").
+Each message contains essential information about the ride, such as the user ID, destination, and ride status, which is updated at each service.
 
-### Directory Structure:
+Log Polling Mechanism
+Log Polling refers to periodically reading the application’s log file to monitor the activities and status of the system. The logs are written in a shared log file, typically by each service, after performing actions such as receiving a request, forwarding a request, or accepting a ride.
 
-```
-/ride-sharing
-  /ride-service
-    - app.js
-  /captain-service
-    - app.js
-  /user-service
-    - app.js
+Every 5 seconds, a log polling process reads the current content of the app.log file, which logs events like ride requests, status changes, and ride acceptances.
+The log polling service outputs the logs to the console for real-time monitoring.
+This log polling allows administrators or developers to track the flow of messages and diagnose any issues in the communication between the services.
 
-```
-
-
- The **Captain Service** will automatically process the request, and you can monitor the log file by checking the `app.log` file for logs. It will also be outputted to the console every 5 seconds as part of the log polling.
-
----
-
-### Explanation:
-- **RabbitMQ**: The services communicate via RabbitMQ. The Ride service sends a message to the RabbitMQ queue, and the Captain service consumes messages from that queue.
-- **Log Polling**: A simple polling mechanism that reads the `app.log` file every 5 seconds to simulate log monitoring.
-- **Microservice Communication**: Each service runs on a different port and handles its own responsibilities (user, ride, captain).
-  
-This is a very basic simulation of a ride-sharing app with microservices. In a real-world scenario, you'd need to add error handling, more advanced features, and ensure proper scalability.
+Key Technologies Used
+Node.js: Each microservice is built using Node.js and Express to expose RESTful endpoints.
+RabbitMQ: Acts as the message broker between services, enabling asynchronous communication via queues.
+Logging: Each service logs important events, such as requests, status changes, and actions, to a shared log file.
+Log Polling: A mechanism that periodically checks the log file for updates and prints the logs to the console.
