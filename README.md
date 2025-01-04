@@ -1,6 +1,6 @@
-﻿# inDrivee
+﻿# inDrive
  
-  inDrivee User, Ride, and Captain with RabbitMQ and Log Polling
+  inDrive User, Ride, and Captain with RabbitMQ and Log Polling
 Overview
 This project demonstrates a simple microservices architecture with three services running locally on localhost:3000:
 
@@ -27,11 +27,11 @@ Flow of Communication
 
 /ride-sharing
   /user
-    - app.js           # User service (port 3001)/n
+    - app.js           # User service (port 3001)
   /ride
-    - app.js           # Ride service (port 3002)/n
+    - app.js           # Ride service (port 3002)
   /captain
-    - app.js           # Captain service (port 3003)/n
+    - app.js           # Captain service (port 3003)
 
 
 Technologies Used
